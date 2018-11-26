@@ -1,0 +1,25 @@
+version: "3.1"
+
+services:
+  zookeeper:
+    build:
+      context: ./Zookeeper
+      dockerfile: Dockerfile
+    ports:
+      - 2181:2181
+
+  kafka:
+    build:
+      context: ./Kafka
+      dockerfile: Dockerfile
+      args:
+        - ZOOKEEPER_HOST=zookeeper
+        # I tried to specify "kafka" as advertised host but it didn't work. Localhost worked though!
+        # Is this used for security check? or client consumers receive this redirect?
+        # https://rmoff.net/2018/08/02/kafka-listeners-explained/
+        - KAFKA_ADVERTISED_HOST=localhost
+    ports:
+      - 9092:9092
+    depends_on:
+      - zookeeper
+
