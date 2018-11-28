@@ -2,6 +2,8 @@ package ru.sandbox.kafka;
 
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.StringSerializer;
+import ru.sandbox.generator.IGeneratedMessage;
+import ru.sandbox.generator.MessageGenerator;
 
 import java.util.Properties;
 
@@ -17,11 +19,14 @@ public class ProducerDemo {
         // create Producer
         KafkaProducer<String, String> producer = new KafkaProducer<String, String>(properties);
 
+        MessageGenerator generator = new MessageGenerator();
+        IGeneratedMessage message = generator.generateMessage();
+
         // create a message
-        ProducerRecord<String, String> message = new ProducerRecord<String, String>("partitioned-topic", "Never fear, Java is here!");
+        ProducerRecord<String, String> record = new ProducerRecord<String, String>("partitioned-topic", message.toJsonString());
 
         // send data
-        producer.send(message, new Callback() {
+        producer.send(record, new Callback() {
             public void onCompletion(RecordMetadata recordMetadata, Exception e) {
                 System.out.println(
                         String.format(
