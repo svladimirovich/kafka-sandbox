@@ -37,6 +37,13 @@
             <!--<scope>test</scope>-->
         </dependency>
 
+        <!-- An extremely useful Lorem Ipsum generator for Java! -->
+        <dependency>
+            <groupId>com.thedeanda</groupId>
+            <artifactId>lorem</artifactId>
+            <version>2.1</version>
+        </dependency>
+
     </dependencies>
 
 
