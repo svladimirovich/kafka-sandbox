@@ -5,6 +5,7 @@ import io.reactivex.*;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
+import jdk.nashorn.internal.runtime.Debug;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.StringSerializer;
 import ru.sandbox.generator.IGeneratedMessage;
@@ -29,11 +30,17 @@ public class RandomMessageEmitter {
     }
 
     public void run() {
+        Producer kafkaProducer = new Producer();
         // this.emitter.subscribeOn
         // this.emitter.observeOn
         this.emitter.blockingSubscribe(message -> {
             //System.out.println(new Gson().toJson(message));
-            pushToKafka(message);
+            kafkaProducer.push(message.toJsonString());
+            kafkaProducer.flush();
+            //pushToKafka(message);
+        }, throwable -> {
+            System.out.println("Error occurred: " + throwable);
+            kafkaProducer.close();
         });
     }
 
