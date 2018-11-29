@@ -1,11 +1,9 @@
 package ru.sandbox.kafka;
-import com.google.gson.Gson;
 import io.reactivex.*;
 
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
-import jdk.nashorn.internal.runtime.Debug;
 import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.StringSerializer;
 import ru.sandbox.generator.IGeneratedMessage;
@@ -20,9 +18,9 @@ public class RandomMessageEmitter {
     }
 
     public RandomMessageEmitter() {
-        this.emitter = Observable.interval(100, TimeUnit.MILLISECONDS).concatMap(x -> {
+        this.emitter = Observable.interval(10, TimeUnit.MILLISECONDS).concatMap(x -> {
             return Observable.just(x)
-                    .delay((long)(Math.random() * 2900), TimeUnit.MILLISECONDS)
+                    .delay((long)(Math.random() * 340), TimeUnit.MILLISECONDS)
                     .timeInterval().map(tick -> {
                         return new MessageGenerator().generateMessage();
                     });
@@ -30,52 +28,19 @@ public class RandomMessageEmitter {
     }
 
     public void run() {
-        Producer kafkaProducer = new Producer();
-        // this.emitter.subscribeOn
-        // this.emitter.observeOn
+        // create Producer properties
+        Properties properties = new Properties();
+        properties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:9092");
+        properties.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        properties.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+
+        Producer kafkaProducer = new Producer(properties);
         this.emitter.blockingSubscribe(message -> {
-            //System.out.println(new Gson().toJson(message));
-            kafkaProducer.push(message.toJsonString());
+            kafkaProducer.push("partitioned-topic", message.toJsonString());
             kafkaProducer.flush();
-            //pushToKafka(message);
         }, throwable -> {
             System.out.println("Error occurred: " + throwable);
             kafkaProducer.close();
         });
-    }
-
-    public void pushToKafka(IGeneratedMessage message) {
-        final String kafkaHost = "127.0.0.1:9092";
-        final String kafkaTopic = "partitioned-topic";
-        // create Producer properties
-        Properties properties = new Properties();
-        properties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaHost);
-        properties.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        properties.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-
-        // create Producer
-        KafkaProducer<String, String> producer = new KafkaProducer<String, String>(properties);
-
-        // create a message
-        ProducerRecord<String, String> record = new ProducerRecord<String, String>(kafkaTopic, message.toJsonString());
-        // send data
-        producer.send(record, (recordMetadata, e) -> {
-            if(e == null) {
-                System.out.println(
-                    String.format(
-                            "Received new metadata!\nTopic: %s\nPartition: %s\nOffset: %s\nTimestamp: %s",
-                            recordMetadata.topic(),
-                            recordMetadata.partition(),
-                            recordMetadata.offset(),
-                            recordMetadata.timestamp()
-                    )
-                );
-            } else {
-                // Error
-                System.out.println("Error while sending message to Kafka! " + e);
-            }
-        });
-        producer.flush();
-        producer.close();
     }
 }

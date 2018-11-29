@@ -1,29 +1,19 @@
 package ru.sandbox.kafka;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.apache.kafka.common.serialization.StringSerializer;
 
 import java.util.Properties;
 
 public class Producer {
-    final String kafkaHost = "127.0.0.1:9092";
-    final String kafkaTopic = "partitioned-topic";
-
     private KafkaProducer<String, String> producer;
 
-    public Producer() {
-        // create Producer properties
-        Properties properties = new Properties();
-        properties.setProperty(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, kafkaHost);
-        properties.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
-        properties.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+    public Producer(Properties properties) {
         // create Producer
         this.producer = new KafkaProducer<String, String>(properties);
     }
 
-    public void push(String message) {
+    public void push(String kafkaTopic, String message) {
         // create a message
         ProducerRecord<String, String> record = new ProducerRecord<String, String>(kafkaTopic, message);
         // send data
