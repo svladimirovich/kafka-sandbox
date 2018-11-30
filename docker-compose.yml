@@ -23,3 +23,9 @@ services:
     depends_on:
       - zookeeper
 
+  elasticsearch:
+    image: elasticsearch:6.5.1
+    ports:
+      - 9200:9200
+      #- 9300:9300
+
