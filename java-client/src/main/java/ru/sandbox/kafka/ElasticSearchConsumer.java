@@ -39,7 +39,9 @@ public class ElasticSearchConsumer {
                         record.key(), record.value(), record.partition(), record.offset()));
 
                 // Inserting entry to ElasticSearch for each message in the kafka topic
-                IndexRequest indexRequest = new IndexRequest("lorem", "message").source(record.value(), XContentType.JSON);
+                // unique kafka message id required for the insert to elastic search to be idempotent
+                String kafkaId = String.format("%s_%s_%d", record.topic(), record.partition(), record.offset());
+                IndexRequest indexRequest = new IndexRequest("lorem", "message", kafkaId).source(record.value(), XContentType.JSON);
                 IndexResponse response = consumer.elasticSearch.index(indexRequest, RequestOptions.DEFAULT);
                 String id = response.getId();
                 System.out.println("Received Id from elasticsearch: " + id);
