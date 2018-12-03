@@ -6,6 +6,8 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -35,6 +37,7 @@ public class ElasticSearchConsumer {
 
             if(messages.count() > 0) {
 
+                BulkRequest bulkRequest = new BulkRequest();
 
                 System.out.println(String.format("Received %d records from Kafka", messages.count()));
                 for (ConsumerRecord<String, String> record : messages) {
@@ -46,18 +49,12 @@ public class ElasticSearchConsumer {
                     // unique kafka message id required for the insert to elastic search to be idempotent
                     String kafkaId = String.format("%s_%s_%d", record.topic(), record.partition(), record.offset());
                     IndexRequest indexRequest = new IndexRequest("lorem", "message", kafkaId).source(record.value(), XContentType.JSON);
-                    IndexResponse response = consumer.elasticSearch.index(indexRequest, RequestOptions.DEFAULT);
-                    String id = response.getId();
-                    System.out.println("Received Id from elasticsearch: " + id);
 
-                    // Delay for testing purpose
-                    try {
-                        Thread.sleep(500);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-
+                    bulkRequest.add(indexRequest);
                 }
+
+                System.out.println(String.format("Pushing %d messages to elasticSearch as a bulk", bulkRequest.numberOfActions()));
+                BulkResponse response = consumer.elasticSearch.bulk(bulkRequest, RequestOptions.DEFAULT);
 
                 // Manually commit the offset after the batch of received records has been successfully processed
                 kafkaConsumer.commitAsync();
@@ -99,6 +96,7 @@ public class ElasticSearchConsumer {
         properties.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
         // Switch to committing the offset manually
         properties.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+        properties.setProperty(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "100");
 
         // create consumer
         KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(properties);
