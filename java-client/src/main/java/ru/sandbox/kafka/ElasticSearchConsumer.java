@@ -33,20 +33,44 @@ public class ElasticSearchConsumer {
         while(true) {
             ConsumerRecords<String, String> messages = kafkaConsumer.poll(Duration.ofMillis(100));
 
-            for(ConsumerRecord<String, String> record : messages) {
-                System.out.println(String.format(
-                        "Received Message! Key: %s Message: %s Partition: %s Offset: %s",
-                        record.key(), record.value(), record.partition(), record.offset()));
+            if(messages.count() > 0) {
 
-                // Inserting entry to ElasticSearch for each message in the kafka topic
-                // unique kafka message id required for the insert to elastic search to be idempotent
-                String kafkaId = String.format("%s_%s_%d", record.topic(), record.partition(), record.offset());
-                IndexRequest indexRequest = new IndexRequest("lorem", "message", kafkaId).source(record.value(), XContentType.JSON);
-                IndexResponse response = consumer.elasticSearch.index(indexRequest, RequestOptions.DEFAULT);
-                String id = response.getId();
-                System.out.println("Received Id from elasticsearch: " + id);
 
+                System.out.println(String.format("Received %d records from Kafka", messages.count()));
+                for (ConsumerRecord<String, String> record : messages) {
+                    System.out.println(String.format(
+                            "Received Message! Key: %s Message: %s Partition: %s Offset: %s",
+                            record.key(), record.value(), record.partition(), record.offset()));
+
+                    // Inserting entry to ElasticSearch for each message in the kafka topic
+                    // unique kafka message id required for the insert to elastic search to be idempotent
+                    String kafkaId = String.format("%s_%s_%d", record.topic(), record.partition(), record.offset());
+                    IndexRequest indexRequest = new IndexRequest("lorem", "message", kafkaId).source(record.value(), XContentType.JSON);
+                    IndexResponse response = consumer.elasticSearch.index(indexRequest, RequestOptions.DEFAULT);
+                    String id = response.getId();
+                    System.out.println("Received Id from elasticsearch: " + id);
+
+                    // Delay for testing purpose
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+
+                // Manually commit the offset after the batch of received records has been successfully processed
+                kafkaConsumer.commitAsync();
+                System.out.println(String.format("Committing offsets after a batch of %d records been processed", messages.count()));
+
+                // Delay for testing purpose
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
+
         }
 
         // consumer.elasticSearch.close();
@@ -73,6 +97,8 @@ public class ElasticSearchConsumer {
         properties.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         properties.setProperty(ConsumerConfig.GROUP_ID_CONFIG, "kafka-demo-elasticsearch");
         properties.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        // Switch to committing the offset manually
+        properties.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
 
         // create consumer
         KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(properties);
