@@ -1,0 +1,3 @@
+# file created by the worker to track offset and whatever else it might need
+# filename is set in the configuration file: "worker.properties" as "offset.storage.file.filename" property
+standalone.offsets
