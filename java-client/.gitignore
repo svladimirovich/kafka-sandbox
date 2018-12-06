@@ -14,3 +14,6 @@
 # Maven
 log/
 target/
+
+# Twitter API configuration
+TwitterApiConfig.java
