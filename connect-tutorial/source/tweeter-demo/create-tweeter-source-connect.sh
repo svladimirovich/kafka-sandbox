@@ -1,4 +1,4 @@
-# Because of some unknown bug:
+# Because of some unknown bug: (kafka upgraded, but this tweeter connect component still lags behind)
 #   {error_code: 500, message: "Must configure one of topics or topics.regex"}
 # I had to specify both "topic" & "topics" properties.
 
