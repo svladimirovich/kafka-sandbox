@@ -16,6 +16,15 @@ services:
       - 9581-9585:9581-9585       # JMX Ports
       - 9092:9092                 # Kafka Broker
 
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - 5432:5432
+
   # if elasticsearch fails to start with an error message like this:
   # ERROR: [1] bootstrap checks failed
   #        [1]: max virtual memory areas vm.max_map_count [65530] is too low, increase to at least [262144]
