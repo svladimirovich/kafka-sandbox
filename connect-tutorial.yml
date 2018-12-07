@@ -15,3 +15,14 @@ services:
       - 8081-8083:8081-8083       # REST Proxy, Schema Registry, Kafka Connect ports
       - 9581-9585:9581-9585       # JMX Ports
       - 9092:9092                 # Kafka Broker
+
+  # if elasticsearch fails to start with an error message like this:
+  # ERROR: [1] bootstrap checks failed
+  #        [1]: max virtual memory areas vm.max_map_count [65530] is too low, increase to at least [262144]
+  # Run the following command to increase memory on the Docker HOST:
+  # $ sysctl -w vm.max_map_count=262144
+  elasticsearch:
+    image: elasticsearch:6.5.1
+    ports:
+      - 9200:9200
+      #- 9300:9300
