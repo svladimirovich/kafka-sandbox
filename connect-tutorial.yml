@@ -35,3 +35,21 @@ services:
     ports:
       - 9200:9200
       #- 9300:9300
+
+  mssql-source:
+    image: microsoft/mssql-server-linux
+    ports:
+      - 1433:1433
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=simpleTest1
+      # and if SQL-Agent not started, then CDC won't run
+      - MSSQL_AGENT_ENABLED=true
+
+  # mssql-sink:
+  #   image: microsoft/mssql-server-linux
+  #   ports:
+  #     - 1433:1433
+  #   environment:
+  #     - ACCEPT_EULA=Y
+  #     - SA_PASSWORD=simpleTest1
