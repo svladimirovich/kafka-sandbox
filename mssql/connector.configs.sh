@@ -34,14 +34,17 @@ curl -X PUT \
   -H 'Content-Type: application/json' \
   -H 'Accept: application/json' \
   -d '{
-  "connector.class": "io.debezium.connector.sqlserver.SqlServerConnector",
-  "database.user": "sa",
-  "database.dbname": "SourceDB",
-  "database.hostname": "mssql-source",
-  "database.password": "simpleTest1",
-  "database.history.kafka.bootstrap.servers": "kafka-cluster:9092",
-  "database.history.kafka.topic": "dbhistory-fulfillment",
-  "database.server.name": "mssql-source",
-  "database.port": "1433",
-  "table.whitelist": "Users"
+	"name": "MyDebeziumSqlConnector",
+	"config": {
+		"connector.class": "io.debezium.connector.sqlserver.SqlServerConnector",
+		"database.user": "sa",
+		"database.dbname": "SourceDB",
+		"database.hostname": "mssql-source",
+		"database.password": "simpleTest1",
+		"database.history.kafka.bootstrap.servers": "kafka-cluster:9092",
+		"database.history.kafka.topic": "dbhistory-fulfillment",
+		"database.server.name": "mssql-source",
+		"database.port": "1433",
+		"table.whitelist": "Users"
+	}
 }'
