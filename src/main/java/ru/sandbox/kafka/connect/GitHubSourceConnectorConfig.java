@@ -33,8 +33,9 @@ public class GitHubSourceConnectorConfig extends AbstractConfig {
     private static final String AUTH_PASSWORD_CONFIG = "auth.password";
     private static final String AUTH_PASSWORD_DOC = "GitHub user's password to authenticate API calls";
 
-    public GitHubSourceConnectorConfig(ConfigDef definition, Map<?, ?> originals) {
-        super(definition, originals);
+    public GitHubSourceConnectorConfig(Map<?, ?> originals) {
+        super(config(), originals);
+
     }
 
     public static ConfigDef config() {
