@@ -23,7 +23,7 @@ public class GitHubSourceTask extends SourceTask {
     private GitHubSourceConnectorConfig config = null;
     private GitHubAPIHttpClient gitHubHttpAPIClient;
 
-    private Instant nextQuerySince;
+    private Instant nextQuerySince = Instant.MIN;
     private Integer lastIssueNumber;
     private Integer nextPageToVisit = 1;
     private Instant lastUpdatedAt;
