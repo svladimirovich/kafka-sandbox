@@ -1,5 +1,14 @@
 version: "3.1"
 
+# Manual creation with Docker
+### 1) Zookeeper:
+# docker run -d -p 2181:2181 --network my-kafka --network-alias zookeeper zookeeper 
+### 2) Kafka:
+# docker run -d -p 9092:9092 -e ZOOKEEPER_HOST=zookeeper -e KAFKA_ADVERTISED_HOST=localhost --network my-kafka --network-alias kafka kafka
+### 3) Kafka Connect:
+# winpty docker run -it -p 8083:8083 -e BOOTSTRAP_SERVERS_LIST=kafka:9092 -e REST_PORT:8083 --network my-kafka --network-alias connect connect bash
+
+
 services:
   zookeeper:
     build:
@@ -7,6 +16,10 @@ services:
       dockerfile: Dockerfile
     ports:
       - 2181:2181
+    # networks:
+    #   kafkanet:
+    #     aliases:
+    #       - zookeeper
 
   kafka:
     build:
@@ -20,8 +33,30 @@ services:
         - KAFKA_ADVERTISED_HOST=localhost
     ports:
       - 9092:9092
+    # networks:
+    #   kafkanet:
+    #     aliases:
+    #       - kafka
     depends_on:
       - zookeeper
+
+  kafka-connect:
+    build:
+      context: ./Kafka-Connect
+      dockerfile: Dockerfile
+      args:
+        - BOOTSTRAP_SERVERS_LIST=kafka:9092
+        - REST_PORT=8083
+    ports:
+      - 8083:8083
+    # networks:
+    #   kafkanet:
+    #     aliases:
+    #       - connect
+    depends_on:
+      - kafka
+      #- zookeeper
+
 
   # if elasticsearch fails to start with an error message like this:
   # ERROR: [1] bootstrap checks failed
@@ -34,3 +69,6 @@ services:
       - 9200:9200
       #- 9300:9300
 
+
+# networks:
+#   kafkanet:
