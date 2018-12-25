@@ -1,60 +1,62 @@
 version: "3.2"
 
-# Manual creation with Docker
+# Manual creation with Docker (default values for ARGS are used)
 ### 1) Zookeeper:
 # docker run -d -p 2181:2181 --network kafka-net --network-alias zookeeper kafka-cluster/zookeeper
 ### 2) Kafka:
-# docker run -d -p 9092:9092 -e ZOOKEEPER_HOST=zookeeper -e KAFKA_ADVERTISED_HOST=localhost --network kafka-net --network-alias kafka kafka-cluster/kafka
+# docker run -d -p 9092:9092 --network kafka-net --network-alias kafka kafka-cluster/kafka
 ### 3) Kafka Connect:
-# docker run -d -p 8083:8083 -e BOOTSTRAP_SERVERS_LIST=kafka:9092 -e REST_PORT:8083 --network kafka-net --network-alias connect kafka-cluster/connect
+# docker run -d -p 8083:8083 --network kafka-net --network-alias connect kafka-cluster/connect
 
 services:
   zookeeper:
-    image: kafka-cluster/zookeeper
+    # image: kafka-cluster/zookeeper
     build:
       context: ./Zookeeper
       dockerfile: Dockerfile
     ports:
       - 2181:2181
-    networks:
-      kafka-net:
-        aliases:
-          - zookeeper
+    # networks:
+    #   kafka-net:
+    #     aliases:
+    #       - zookeeper
 
   kafka:
-    image: kafka-cluster/kafka
+    # image: kafka-cluster/kafka
     build:
       context: ./Kafka
       dockerfile: Dockerfile
       args:
-        - ZOOKEEPER_HOST=zookeeper
-        # I tried to specify "kafka" as advertised host but it didn't work. Localhost worked though!
-        # Is this used for security check? or client consumers receive this redirect?
+        ZOOKEEPER_HOST: zookeeper
         # https://rmoff.net/2018/08/02/kafka-listeners-explained/
-        - KAFKA_ADVERTISED_HOST=127.0.0.1
+        # kafka-connect will contact broker using this advertised host name
+        # and any client that connects to kafka should find kafka broker under this host name
+        # best thing I could come up with for now is to define 'kafka' to point to localhost in /etc/hosts file
+        # that way you get kafka-connect working within the docker network, and any client on your dev host
+        KAFKA_ADVERTISED_HOST: kafka
     ports:
       - 9092:9092
-    networks:
-      kafka-net:
-        aliases:
-          - kafka
+    # networks:
+    #   kafka-net:
+    #     aliases:
+    #       - kafka
     depends_on:
       - zookeeper
 
   kafka-connect:
-    image: kafka-cluster/connect
+    # image: kafka-cluster/connect
     build:
       context: ./Kafka-Connect
       dockerfile: Dockerfile
       args:
-        - BOOTSTRAP_SERVERS_LIST=kafka:9092
-        - REST_PORT=8083
+        BOOTSTRAP_SERVERS_LIST: kafka:9092
+        REST_PORT: 8083
     ports:
       - 8083:8083
-    networks:
-      kafka-net:
-        aliases:
-          - connect
+    # networks:
+    #   kafka-net:
+    #     aliases:
+    #       - connect
     depends_on:
       - kafka
 
@@ -69,7 +71,7 @@ services:
   #     - 9200:9200
   #     #- 9300:9300
 
-networks:
-  kafka-net:
-    external: true
-    #driver: bridge
+# networks:
+#   kafka-net:
+#     #external: true
+#     driver: bridge
