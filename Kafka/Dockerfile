@@ -1,22 +1,20 @@
-FROM ubuntu
-
-# update package information
-RUN apt update
-
-# install Java 8
-RUN apt --yes install openjdk-8-jdk
-
-# install kafka
-RUN apt --yes install curl
+# download kafka on small alpine image with curl installed
+FROM alpine AS kafkaFileDownload
+RUN apk add curl
 RUN curl -O http://mirror.linux-ia64.org/apache/kafka/2.0.1/kafka_2.12-2.0.1.tgz
+
+# host kafka-connect on java 8 image running connect-distributed
+FROM java:8-alpine
+
+# seems like kafka *.sh scripts require bash (and ["/entrypoint.sh"] probably too)
+RUN apk update
+RUN apk add bash
+
+COPY --from=kafkaFileDownload /kafka_2.12-2.0.1.tgz .
 RUN tar -xvf kafka_2.12-2.0.1.tgz
 RUN rm kafka_2.12-2.0.1.tgz
+# add kafka/bin to PATH
 RUN echo "export PATH=/kafka_2.12-2.0.1/bin:$PATH" >> ~/.bashrc
-
-# as kafka course guy did for some reason, place kafka data files to a special folder
-RUN mkdir /kafka_2.12-2.0.1/data
-RUN mkdir /kafka_2.12-2.0.1/data/kafka
-RUN sed -i -E 's/(log.dirs=)([^\n]*)/\1\/kafka_2.12-2.0.1\/data\/kafka/g' /kafka_2.12-2.0.1/config/server.properties
 
 # set zookeeper host in kafka config
 ARG ZOOKEEPER_HOST=zookeeper

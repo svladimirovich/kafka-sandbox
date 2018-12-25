@@ -13,6 +13,8 @@ RUN apk add bash
 COPY --from=kafkaFileDownload /kafka_2.12-2.0.1.tgz .
 RUN tar -xvf kafka_2.12-2.0.1.tgz
 RUN rm kafka_2.12-2.0.1.tgz
+# add kafka/bin to PATH
+RUN echo "export PATH=/kafka_2.12-2.0.1/bin:$PATH" >> ~/.bashrc
 
 # list of host/port pairs to use for establishing the initial connection to the Kafka cluster
 ARG BOOTSTRAP_SERVERS_LIST=kafka:9092

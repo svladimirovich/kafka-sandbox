@@ -1,27 +1,28 @@
-version: "3.1"
+version: "3.2"
 
 # Manual creation with Docker
 ### 1) Zookeeper:
-# docker run -d -p 2181:2181 --network my-kafka --network-alias zookeeper zookeeper 
+# docker run -d -p 2181:2181 --network kafka-net --network-alias zookeeper kafka-cluster/zookeeper
 ### 2) Kafka:
-# docker run -d -p 9092:9092 -e ZOOKEEPER_HOST=zookeeper -e KAFKA_ADVERTISED_HOST=localhost --network my-kafka --network-alias kafka kafka
+# docker run -d -p 9092:9092 -e ZOOKEEPER_HOST=zookeeper -e KAFKA_ADVERTISED_HOST=localhost --network kafka-net --network-alias kafka kafka-cluster/kafka
 ### 3) Kafka Connect:
-# winpty docker run -it -p 8083:8083 -e BOOTSTRAP_SERVERS_LIST=kafka:9092 -e REST_PORT:8083 --network my-kafka --network-alias connect connect bash
-
+# docker run -d -p 8083:8083 -e BOOTSTRAP_SERVERS_LIST=kafka:9092 -e REST_PORT:8083 --network kafka-net --network-alias connect kafka-cluster/connect
 
 services:
   zookeeper:
+    image: kafka-cluster/zookeeper
     build:
       context: ./Zookeeper
       dockerfile: Dockerfile
     ports:
       - 2181:2181
-    # networks:
-    #   kafkanet:
-    #     aliases:
-    #       - zookeeper
+    networks:
+      kafka-net:
+        aliases:
+          - zookeeper
 
   kafka:
+    image: kafka-cluster/kafka
     build:
       context: ./Kafka
       dockerfile: Dockerfile
@@ -30,17 +31,18 @@ services:
         # I tried to specify "kafka" as advertised host but it didn't work. Localhost worked though!
         # Is this used for security check? or client consumers receive this redirect?
         # https://rmoff.net/2018/08/02/kafka-listeners-explained/
-        - KAFKA_ADVERTISED_HOST=localhost
+        - KAFKA_ADVERTISED_HOST=127.0.0.1
     ports:
       - 9092:9092
-    # networks:
-    #   kafkanet:
-    #     aliases:
-    #       - kafka
+    networks:
+      kafka-net:
+        aliases:
+          - kafka
     depends_on:
       - zookeeper
 
   kafka-connect:
+    image: kafka-cluster/connect
     build:
       context: ./Kafka-Connect
       dockerfile: Dockerfile
@@ -49,26 +51,25 @@ services:
         - REST_PORT=8083
     ports:
       - 8083:8083
-    # networks:
-    #   kafkanet:
-    #     aliases:
-    #       - connect
+    networks:
+      kafka-net:
+        aliases:
+          - connect
     depends_on:
       - kafka
-      #- zookeeper
-
 
   # if elasticsearch fails to start with an error message like this:
   # ERROR: [1] bootstrap checks failed
   #        [1]: max virtual memory areas vm.max_map_count [65530] is too low, increase to at least [262144]
   # Run the following command to increase memory on the Docker HOST:
   # $ sysctl -w vm.max_map_count=262144
-  elasticsearch:
-    image: elasticsearch:6.5.1
-    ports:
-      - 9200:9200
-      #- 9300:9300
+  # elasticsearch:
+  #   image: elasticsearch:6.5.1
+  #   ports:
+  #     - 9200:9200
+  #     #- 9300:9300
 
-
-# networks:
-#   kafkanet:
+networks:
+  kafka-net:
+    external: true
+    #driver: bridge
