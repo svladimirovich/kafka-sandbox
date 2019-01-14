@@ -43,6 +43,13 @@ services:
     depends_on:
       - zookeeper
 
+  kafka-word-count:
+    build:
+      context: ./java/word-count-stream
+      dockerfile: Dockerfile
+    depends_on:
+      - kafka
+
   kafka-connect:
     # image: kafka-cluster/connect
     build:
