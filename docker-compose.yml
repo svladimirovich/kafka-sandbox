@@ -43,6 +43,13 @@ services:
     depends_on:
       - zookeeper
 
+  kafka-favorite-color:
+    build:
+      context: ./java/favorite-color-stream
+      dockerfile: Dockerfile
+    depends_on:
+      - kafka
+
   kafka-word-count:
     build:
       context: ./java/word-count-stream
